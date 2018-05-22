@@ -19,6 +19,10 @@ from smtplib import (
     SMTP_SSL,
 )
 
+from email.messgae import (
+    EmailMessage
+)
+
 from tempfile import (
     NamedTemporaryFile,
 )
@@ -127,17 +131,21 @@ def send_email():
                                 contents of cert file
             'sending':
                 type: dict
+                required: true
                 body:
                     'from':
                         type: string
+                        required: true
                         description:
                             sender's email address
                     'to':
                         type: string
+                        required: true
                         description:
                             recipient's address
                     'message':
                         type: dict
+                        required: true
                         body:
                             'headers':
                                 type: dict
@@ -158,8 +166,12 @@ def send_email():
                                 type: string
                                 description HTML body of message.
                             'attachments':
-                                type: list
-                                description: files in teh 'FILES' request.
+                                type: list of dicts
+                                description:
+                                    each dict contains the keys 'name',
+                                    'mimetype', 'subtype', correspondiing
+                                    to the name associted with the file and
+                                    target email's mimetype, subtype,
                     'mail_options':
                         type: dict
     """
@@ -212,6 +224,18 @@ def send_email():
             keyfile = NamedTemporaryFile()
         if starttls.get('cert')
             certfile = NamedTemporaryFile()
-        conn.starttls(keyfile=keyfile, certfile=certfile)
+        conn.starttls(keyfile=keyfile.name, certfile=certfile.name)
+
+    # Construct the message
+    message_data = send_data['message']
+    message = EmailMessage()
+    for (k, v) in message_data.get('headers', {}):
+        message[k] = v
+    message.set_content(message_data['text_body'])
+    if 'html_body' in message_data:
+        message.add_alternative(html_body, subtype='html')
+    for (name, file) in request.files:
+        with open(file) as to_attach:
+            message.get_payload()[1].add_related(to_attach.read)
 
     conn.sendmail(from_addr=sending['from'], to_addrs=sending['to'])
