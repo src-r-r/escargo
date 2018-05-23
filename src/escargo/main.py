@@ -222,7 +222,7 @@ def send_email():
         certfile = None
         if starttls.get('key'):
             keyfile = NamedTemporaryFile()
-        if starttls.get('cert')
+        if starttls.get('cert'):
             certfile = NamedTemporaryFile()
         conn.starttls(keyfile=keyfile.name, certfile=certfile.name)
 
