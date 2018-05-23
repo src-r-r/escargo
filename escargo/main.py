@@ -63,7 +63,6 @@ def write_temp_if_in(data, key, content=None):
         return None
     return write_temp(content or data[key])
 
-
 @app.route('/', methods='POST')
 def send_email():
     """ Send an email semi-easily.
