@@ -5,6 +5,7 @@ from flask import (
     Flask,
     request,
     Response,
+    jsonify,
 )
 
 from userless.models import (
@@ -225,6 +226,24 @@ def send_email():
         if starttls.get('cert')
             certfile = NamedTemporaryFile()
         conn.starttls(keyfile=keyfile.name, certfile=certfile.name)
+
+    # If the user just wants to verify, return the result of SMTP.verify()
+    if verify:
+        (code, message) = conn.verify(verify)
+        if code == 404:
+            return jsonify({
+                'error': {
+                    'code': code,
+                    'message': message,
+                }
+            })
+        else:
+            return jsonify({
+                'result': {
+                    'code': code,
+                    'address': address,
+                }
+            })
 
     # Construct the message
     message_data = send_data['message']
