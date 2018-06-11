@@ -107,7 +107,7 @@ def send_email():
                         context from the serve will be loaded.
                     optional_for: smtp_ssl
                     body:
-                        'certi':
+                        'cert':
                             type: string
                             description: contents of the cert file
                         'key':

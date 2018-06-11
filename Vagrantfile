@@ -39,6 +39,14 @@ Vagrant.configure("2") do |config|
   # your network.
   # config.vm.network "public_network"
 
+  config.vm.define "mailServerSender" do |lb1|
+    lb1.vm.box = "ubuntu/trusty64"
+  end
+
+  config.vm.define "mailServerRecipient" do |web1|
+    web1.vm.box = "ubuntu/trusty64"
+  end
+
   # Share an additional folder to the guest VM. The first argument is
   # the path on the host to the actual folder. The second argument is
   # the path on the guest to mount the folder. And the optional third
