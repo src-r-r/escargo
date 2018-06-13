@@ -1,6 +1,21 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+Vagrant.configure("2") do |config|
+  #...
+
+  config.dns.tld = "escargo"
+
+  config.vm.hostname = "dns-escargo"
+
+  config.dns.patterns = [/^.*sender.escargo$/, ]
+
+  config.vm.network :private_network, ip: "33.33.33.60"
+end
+
+# optional
+VagrantDNS::Config.logger = Logger.new("dns.log")
+
 # All Vagrant configuration is done below. The "2" in Vagrant.configure
 # configures the configuration version (we support older styles for
 # backwards compatibility). Please don't change it unless you know what
@@ -12,7 +27,7 @@ Vagrant.configure("2") do |config|
 
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://vagrantcloud.com/search.
-  config.vm.box = "ubuntu/bionic64"
+  # config.vm.box = "ubuntu/bionic64"
 
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
@@ -32,19 +47,26 @@ Vagrant.configure("2") do |config|
 
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
-  config.vm.network "private_network", ip: "22.22.22.22"
+  # config.vm.network "private_network", ip: "22.22.22.22"
 
   # Create a public network, which generally matched to bridged network.
   # Bridged networks make the machine appear as another physical device on
   # your network.
   # config.vm.network "public_network"
 
-  config.vm.define "mailServerSender" do |lb1|
-    lb1.vm.box = "ubuntu/trusty64"
+  # ESCARGO NOTE: 2 machines will be used for testing: 1 - sender and 2 -
+  # ESCARGO NOTE: receiver.
+
+  config.vm.define "escargo-sender" do |escargo_sender|
+    escargo_sender.vm.box = "ubuntu/bionic64"
+    escargo_sender.vm.provision :shell, path: "./vagrant/bootstrap/sender.sh"
+    escargo_sender.vm.network "private_network", ip: "22.22.22.22"
   end
 
-  config.vm.define "mailServerRecipient" do |web1|
-    web1.vm.box = "ubuntu/trusty64"
+  config.vm.define "escargo-recipient" do |escargo_recipient|
+    escargo_recipient.vm.box = "ubuntu/bionic64"
+    # escargo_recipient.vm.provision :shell, path: "vagrant-bootstrap.sh"
+    escargo_recipient.vm.network "private_network", ip: "22.22.22.23"
   end
 
   # Share an additional folder to the guest VM. The first argument is

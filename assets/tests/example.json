@@ -1,0 +1,24 @@
+{
+    "connection": {
+        "conn_type": "smtp",
+        "host": "",
+        "port": 500,
+        "options": {
+            "debug_level": 2,
+            "login": {
+                "user": "",
+                "password"
+            },
+            "starttls": {
+
+            },
+        },
+        "sending": {
+            "from": "example@example.com",
+            "to": "tester@exampe.com",
+            "message": {
+                "text_body": "This is a test of Escargo, the 0-config Email API"
+            }
+        }
+    }
+}

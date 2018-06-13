@@ -10,11 +10,6 @@ from flask import (
     jsonify,
 )
 
-from userless.models import (
-    app,
-    db,
-)
-
 import ssl
 
 from smtplib import (
@@ -23,8 +18,8 @@ from smtplib import (
     SMTP_SSL,
 )
 
-from email.messgae import (
-    EmailMessage
+from email.message import (
+    Message as EmailMessage
 )
 
 from tempfile import (
@@ -49,7 +44,7 @@ def write_temp(content):
 
 
 def write_temp_if_in(data, key, content=None):
-    """ Create a temp file only if `key` is in `data`
+    """ Create a temp file only if `key` is in `data`.
 
     :param data: dictionary data.
 
@@ -64,7 +59,10 @@ def write_temp_if_in(data, key, content=None):
     return write_temp(content or data[key])
 
 
-@app.route('/', methods='POST')
+app = Flask(__name__)
+
+
+@app.route('/', methods=['POST'])
 def send_email():
     """ Send an email semi-easily.
 
