@@ -16,7 +16,7 @@ in the project root. If this is your first time running escargo it will take
 a while for the installation to complete.
 
 Once installation is complete, you should now have an instance of escargo
-running at `http://localhost:6000`.
+running at `http://localhost:5000`.
 
 # Endpoint
 
