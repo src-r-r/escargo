@@ -1,0 +1,3 @@
+flask
+pyyaml
+python3_json_log_formatter

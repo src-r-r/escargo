@@ -26,7 +26,28 @@ REQUIRED = [
     # 'requests', 'maya', 'records',
 ]
 
-with open('./requirements.txt') as req:
+
+def find_file(filename, base_root=os.path.abspath(os.path.dirname(__file__))):
+    """ Finds the first instance of `filename`.
+
+    :param filename: name of the file.
+
+    :param base_root: Initial directory to search (default=`here`)
+
+    :return: The full path to the first instance of `filename`, or None
+        if not found.
+    """
+    base_root = os.path.abspath(base_root)
+    for (root, dirs, files) in os.walk(base_root):
+        print('setup - looking for {} in {}'.format(filename, root))
+        if filename in files:
+            print('setup - found {}/{}'.format(root, filename))
+            return os.path.join(root, filename)
+    print('setup - not found :(')
+    return None
+
+
+with open(find_file('requirements.txt')) as req:
     REQUIRED = [l for l in req if not l.startswith('#')]
 
 # The rest you shouldn't have to touch too much :)
@@ -38,13 +59,14 @@ here = os.path.abspath(os.path.dirname(__file__))
 
 # Import the README and use it as the long-description.
 # Note: this will only work if 'README.md' is present in your MANIFEST.in file!
-with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
+README_PATH = find_file('README.md', '..')
+with io.open(README_PATH, encoding='utf-8') as f:
     long_description = '\n' + f.read()
 
 # Load the package's __version__.py module as a dictionary.
 about = {}
 if not VERSION:
-    with open(os.path.join(here, NAME, '__version__.py')) as f:
+    with open(find_file('__version__.py', '..')) as f:
         exec(f.read(), about)
 else:
     about['__version__'] = VERSION
@@ -97,6 +119,7 @@ setup(
     author=AUTHOR,
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
+    package_dir={'': 'src'},
     url=URL,
     packages=find_packages('src', exclude=('tests',)),
     # If your package is a single module, use this instead of 'packages':

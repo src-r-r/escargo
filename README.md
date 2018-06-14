@@ -7,6 +7,17 @@ machine and you can being sending email easily using the endpoint.
 
 Firstly, ensure [Vagrant is installed](https://www.vagrantup.com/docs/installation/).
 
+The default vagrant machine in the `Vagrantfile` hosts the microservice. So,
+to get set up quickly, run
+
+    $ vagrant up
+
+in the project root. If this is your first time running escargo it will take
+a while for the installation to complete.
+
+Once installation is complete, you should now have an instance of escargo
+running at `http://localhost:6000`.
+
 # Endpoint
 
 There's really only 1 endpoint for this service:
@@ -163,4 +174,20 @@ Documetation copied from the source:
 
 # Testing
 
-In order to test, we'll need to spin up at least 2 vagrant instances.
+My original intention was to get 3 vagrant instances up and running for testing:
+
+1. One instance would send the email.
+2. Another instance would act as the DNS.
+3. A third instance would be the email recipient.
+
+But configuring email is hard, so (for now) testing is best done manually.
+Copy the file `<escargo_root>/assets/tests/example.json` to
+`<escargo_root>/assets/tests/config.json` and modify to your own needs for a
+test mail server.
+
+Then run the tests by naviating to `<escargo_root>/src/` and running
+
+    $ python setup.py test
+
+This will use what's in `config.json` as the POST data and will verify that
+the `200` status was returned.

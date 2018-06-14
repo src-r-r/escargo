@@ -16,6 +16,7 @@ CONFIG_JSON = os.path.join(TEST_ASSETS, 'config.json')
 
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class TestApi(unittest.TestCase):
@@ -36,8 +37,13 @@ class TestApi(unittest.TestCase):
         logger.debug("{} bytes read from json config".format(
             len(str(self.config))
         ))
+        logger.debug(self.config)
 
         self.client = app.test_client()
 
     def test_api(self):
-        self.assertEqual(1, 1)
+        with app.app_context():
+            resp = self.client.post('/', data=json.dumps(self.config),
+                                    content_type='application/json')
+            logger.info(resp.json)
+            self.assertEqual(resp.status_code, 200)

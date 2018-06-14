@@ -1,0 +1,32 @@
+
+disable_existing_loggers: false
+formatters:
+    brief: {format: '[%(levelname)s] [%(module)s] %(message)s'}
+    json:
+        (): python3_json_log_formatter.JsonFormatter
+        datefmt: '%Y-%M-%d %H:%M:%S.%f'
+        json_kwargs: {indent: 2}
+    verbose: {format: '[%(levelname)s] %(asctime)s %(filename)s:%(lineno)s %(message)s'}
+handlers:
+    rotating_file_out:
+        class: logging.handlers.TimedRotatingFileHandler
+        formatter: json
+        level: INFO
+        filename: '/var/log/escargo/out.log'
+    rotating_file_err:
+        class: logging.handlers.TimedRotatingFileHandler
+        formatter: json
+        level: DEBUG
+        filename: '/var/log/escargo/err.log'
+    console: {class: logging.StreamHandler, formatter: brief}
+    console_verbose: {class: logging.StreamHandler, formatter: verbose}
+    json_console: {class: logging.StreamHandler, formatter: json}
+loggers:
+    console: {handler: json_console, level: DEBUG}
+propagate: false
+root:
+    handlers: [console_verbose, ]
+    level: DEBUG
+sqlalchemy: {level: DEBUG}
+version: 1
+werkzeig: {level: INFO}

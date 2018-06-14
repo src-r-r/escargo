@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
 import logging
-
+import logging.config
+import os
+import json
 
 from flask import (
     Flask,
@@ -16,18 +18,36 @@ from smtplib import (
     SMTP,
     LMTP,
     SMTP_SSL,
+
+    SMTPConnectError,
 )
 
 from email.message import (
-    Message as EmailMessage
+    EmailMessage
 )
 
 from tempfile import (
     NamedTemporaryFile,
 )
 
+import yaml
+
+
+HERE = os.path.dirname(__file__)
+LOG_CONFIG = os.path.join(HERE, 'logging.yaml')
+
+with open(LOG_CONFIG) as log_config:
+    logging.config.dictConfig(yaml.load(log_config))
 
 log = logging.getLogger(__name__)
+
+
+class JsonResponse(Response):
+
+    def __init__(self, *args, **kwargs):
+        kwargs['response'] = json.dumps(kwargs.get('response', {}))
+        kwargs['content_type'] = 'application/json'
+        super(Response, self).__init__(*args, **kwargs)
 
 
 def write_temp(content):
@@ -142,10 +162,22 @@ def send_email():
                     body:
                         'user':
                             type: str
+                            required: True
                             description: user to log in.
                         'password':
                             type: str
                             description: password for the site.
+                            required: True
+                        'initial_response_ok':
+                            type: bool
+                            required: False
+                            description:
+                                specifies whether, for authentication methods
+                                that support it, an “initial response” as
+                                specified in RFC 4954 can be sent along with
+                                the AUTH command, rather than requiring a
+                                challenge/response.
+                            default: True
                 'auth':
                     type: dict
                     description:
@@ -178,6 +210,10 @@ def send_email():
                         required: true
                         description:
                             recipient's address
+                    'subject':
+                        type: string
+                        required: false
+                        description: Subject of the email message.
                     'message':
                         type: dict
                         required: true
@@ -214,9 +250,9 @@ def send_email():
 
     conn_data = body['connection']
     send_data = body['sending']
-    options_data = body.get('options')
+    options_data = body.get('options', {})
 
-    conn_type = conn_data['type'].lower()
+    conn_type = conn_data['conn_type'].lower()
     host = conn_data['host']
     port = int(conn_data['port'])
     local_hostname = conn_data.get('local_hostname')
@@ -237,8 +273,15 @@ def send_email():
     log.debug('connection type is [{}]'.format(conn_type.upper()))
 
     if conn_type == 'smtp':
-        conn = SMTP(host=host, port=port, local_hostname=local_hostname,
-                    timeout=timeout, source_address=source_address)
+        try:
+            conn = SMTP(host=host, port=port, local_hostname=local_hostname,
+                        timeout=timeout, source_address=source_address)
+        except SMTPConnectError as e:
+            log.error(e)
+            return JsonResponse(
+                status=500,
+                response={"message": str(e)}
+            )
 
     elif conn_type == 'smtp_ssl':
         keyfile = write_temp_if_in(certificate_data, 'keyfile')
@@ -256,34 +299,44 @@ def send_email():
                         context=ssl_context, source_address=source_address)
 
     elif conn_type == 'lmtp':
-        conn = SMTP_SSL(host=host, port=port, local_hostname=local_hostname,
-                        source_address=source_address)
+        conn = LMTP(host=host, port=port, local_hostname=local_hostname,
+                    source_address=source_address)
 
     # Configure options
     if debug_level:
-        log.debug('set debug_level={}'.format(debug_level))
+        log.info('set debug_level={}'.format(debug_level))
         conn.set_debuglevel(debug_level)
 
-    if login:
-        log.debug('trying login with user={}'.format(login['user']))
-        conn.login(login['user'], login['password'],
-                   login['initial_response_ok'])
+    log.info('connecting to {}:{}'.format(host, port))
+    conn.connect(host=host, port=port)
 
-    if starttls:
+    log.debug('startls={}'.format(starttls))
+
+    if starttls or starttls == {}:
         log.debug('initializing STARTTLS')
         keyfile = None
         certfile = None
+        keyfile_name = None
+        certfile_name = None
         if starttls.get('key'):
             keyfile = NamedTemporaryFile()
+            keyfile_name = keyfile.name
         if starttls.get('cert'):
             certfile = NamedTemporaryFile()
-        log.debug('STARTLS keyfile={}, certfile={}'.format(keyfile.name,
-                                                           certfile.name))
-        conn.starttls(keyfile=keyfile.name, certfile=certfile.name)
+            certfile_name = certfile.name
+        log.info('STARTLS keyfile={}, certfile={}'.format(keyfile_name,
+                                                          certfile_name))
+        conn.starttls(keyfile=keyfile_name, certfile=certfile_name)
+
+    if login:
+        log.debug('trying login with user={}'.format(login['user']))
+        initial_response_ok = login.get('initial_response_ok', True)
+        conn.login(login['user'], login['password'],
+                   initial_response_ok=initial_response_ok)
 
     # If the user just wants to verify, return the result of SMTP.verify()
     if verify:
-        log.debug('simply verifying {}'.format(verify))
+        log.info('simply verifying {}'.format(verify))
         (code, message) = conn.verify(verify)
         if code == 404:
             return jsonify({
@@ -303,6 +356,10 @@ def send_email():
     # Construct the message
     message_data = send_data['message']
     message = EmailMessage()
+    message['From'] = send_data['from']
+    message['To'] = send_data['to']
+    if 'subject' in send_data:
+        message['Subject'] = send_data['subject']
     for (k, v) in message_data.get('headers', {}):
         message[k] = v
     message.set_content(message_data['text_body'])
@@ -312,5 +369,7 @@ def send_email():
         with open(file) as to_attach:
             message.get_payload()[1].add_related(to_attach.read)
 
-    conn.sendmail(from_addr=send_data['from'], to_addrs=send_data['to'],
-                  msg=message)
+    conn.send_message(message)
+    log.info("Message sent successfully.")
+
+    return Response(status=200)
