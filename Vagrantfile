@@ -1,17 +1,17 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-Vagrant.configure("2") do |config|
-  #...
-
-  config.dns.tld = "escargo"
-
-  config.vm.hostname = "dns-escargo"
-
-  config.dns.patterns = [/^.*sender.escargo$/, ]
-
-  config.vm.network :private_network, ip: "33.33.33.60"
-end
+# Vagrant.configure("2") do |config|
+#   #...
+#
+#   config.dns.tld = "escargo"
+#
+#   config.vm.hostname = "dns-escargo"
+#
+#   config.dns.patterns = [/^.*sender.escargo$/, ]
+#
+#   config.vm.network :private_network, ip: "33.33.33.60"
+# end
 
 # optional
 VagrantDNS::Config.logger = Logger.new("dns.log")
@@ -38,8 +38,8 @@ Vagrant.configure("2") do |config|
   # within the machine from a port on the host machine. In the example below,
   # accessing "localhost:8080" will access port 80 on the guest machine.
   # NOTE: This will enable public access to the opened port
-  config.vm.network "forwarded_port", guest: 5000, host: 5000,
-    auto_correct: true
+  config.vm.network "forwarded_port", guest: 80, host: 5000,
+    auto_correct: false
 
   # Create a forwarded port mapping which allows access to a specific port
   # within the machine from a port on the host machine and only allow access
@@ -50,7 +50,7 @@ Vagrant.configure("2") do |config|
   # using a specific IP.
   config.vm.network "private_network", ip: "22.22.22.22"
 
-  config.vm.provision :shell, path: "./vagrant/bootstrap/escargo/service.sh"
+  config.vm.provision :shell, path: "./vagrant/bootstrap/escargo/bootstrap.sh"
 
   # Create a public network, which generally matched to bridged network.
   # Bridged networks make the machine appear as another physical device on

@@ -1,0 +1,16 @@
+[Unit]
+Description=Escargo, Zero-config Email Service
+After=syslog.target network.target electrum.service
+
+[Service]
+WorkingDirectory=/opt/escargo/src/
+#Environment="PYTHONPATH=/opt/escargo/src:$PYTHONPATH"
+Environment="FLASK_APP=escargo.main"
+ExecStart=/bin/bash -c "/usr/bin/python3 -m flask run --host=0.0.0.0 --port=80"
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+[Journal]
+Storage=auto

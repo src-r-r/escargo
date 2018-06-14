@@ -25,7 +25,7 @@ loggers:
     console: {handler: json_console, level: DEBUG}
 propagate: false
 root:
-    handlers: [console_verbose, ]
+    handlers: [console_verbose, rotating_file_out, rotating_file_err]
     level: DEBUG
 sqlalchemy: {level: DEBUG}
 version: 1

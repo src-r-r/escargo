@@ -5,6 +5,8 @@
 ###
 
 PYTHON_VERSION=3
+ESCARGO_HOST=0.0.0.0
+ESCARGO_PORT=80
 
 apt update
 apt dist-upgrade -y
@@ -46,6 +48,20 @@ ${PIP} install -r /opt/escargo/src/requirements.txt
 cd /opt/escargo/src
 ${PYTHON} setup.py develop
 
+# Copy the serivce file to the systemd directory
+
+cp /vagrant/vagrant/bootstrap/escargo/escargo.service /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable escargo
+systemctl daemon-reload
+systemctl start escargo
+systemctl status escargo
+
 echo [*] Starting flask application
 
-FLASK_APP=escargo.main ${PYTHON} -m flask run
+########
+# Run the flask application
+
+# FLASK_APP=escargo.main ${PYTHON} -m flask run \
+#     --host=${ESCARGO_HOST} \
+#     --port=${ESCARGO_PORT}
